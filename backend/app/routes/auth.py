@@ -9,6 +9,8 @@ from app.core.otp import generate_otp, save_otp, verify_otp
 from app.core.config import MAIL_USERNAME, MAIL_FROM, MAIL_PASSWORD, MAIL_PORT, MAIL_SERVER, MAIL_FROM_NAME
 from app.core.redis import redis_client
 from fastapi_mail import ConnectionConfig, MessageSchema, FastMail
+from fastapi.security import OAuth2PasswordRequestForm
+
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -124,8 +126,12 @@ async def confirm_registration(data: VerifyOtp, db: Session = Depends(get_db)):
         )
 
 
+
 @router.post("/login", response_model=TokenResponse)
-async def login(user_data: UserLogin, db: Session = Depends(get_db)):
+async def login(
+    user_data: UserLogin, 
+    db: Session = Depends(get_db),
+    ):
     
     user = db.query(User).filter(User.email == user_data.email).first()
 
@@ -143,7 +149,7 @@ async def login(user_data: UserLogin, db: Session = Depends(get_db)):
     
     token = create_access_token({
         "sub": str(user.id),
-        "role": user.role.value    # For role based auth
+        "role": user.role.value
     })
 
     return {
@@ -151,9 +157,46 @@ async def login(user_data: UserLogin, db: Session = Depends(get_db)):
         "token_type": "bearer"
     }
 
+
+@router.post("/form-login", response_model=TokenResponse)
+async def login(
+    form_data: OAuth2PasswordRequestForm = Depends(), 
+    db: Session = Depends(get_db),
+    ):
+    
+    user = db.query(User).filter(User.email == form_data.username).first()
+
+    if not user:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid email or password"
+        )
+    
+    if not verify_password(form_data.password, user.password):
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid email or password"
+        )
+    
+    token = create_access_token({
+        "sub": str(user.id),
+        "role": user.role.value
+    })
+
+    return {
+        "access_token": token,
+        "token_type": "bearer"
+    }
+
+
 # Authorize
-router.get("/auth-me")
-def get_profile(
-        current_user: User = Depends(get_current_user)
-):
-    return current_user
+@router.get("/me")
+async def get_profile(current_user: User = Depends(get_current_user)):
+    """Get current authenticated user profile"""
+    return {
+        "id": current_user.id,
+        "name": current_user.name,
+        "email": current_user.email,
+        "phone": current_user.phone,
+        "role": current_user.role.value
+    }

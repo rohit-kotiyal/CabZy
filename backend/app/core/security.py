@@ -10,7 +10,7 @@ from app.models.user import User
 
 
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/form-login")
 
 # Hash Password
 def hash_password(password: str):
