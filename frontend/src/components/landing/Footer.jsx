@@ -19,8 +19,6 @@ export default function Footer(){
 
                     {/* Navigation Links */}
                     <nav className="flex flex-wrap items-center justify-center gap-4 md:gap-8">
-                        <Link to="/about" className="text-gray-300 hover:text-cyan-400 transition-colors text-sm md:text-base">About</Link>
-                        <Link to="/contact" className="text-gray-300 hover:text-cyan-400 transition-colors text-sm md:text-base">Contact</Link>
                         <Link to="/privacy" className="text-gray-300 hover:text-cyan-400 transition-colors text-sm md:text-base">Privacy Policy</Link>
                         <Link to="/terms" className="text-gray-300 hover:text-cyan-400 transition-colors text-sm md:text-base">Terms & Conditions</Link>
                     </nav>
