@@ -10,6 +10,8 @@ from app.core.config import MAIL_USERNAME, MAIL_FROM, MAIL_PASSWORD, MAIL_PORT, 
 from app.core.redis import redis_client
 from fastapi_mail import ConnectionConfig, MessageSchema, FastMail
 from fastapi.security import OAuth2PasswordRequestForm
+from app.models.admin import Admin
+
 
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
@@ -78,6 +80,7 @@ async def send_otp(user_data: UserRegister, db: Session = Depends(get_db)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to send OTP email: {str(e)}")
 
+
 # Register User
 @router.post("/verify-otp", response_model=TokenResponse)
 async def confirm_registration(data: VerifyOtp, db: Session = Depends(get_db)):
@@ -105,8 +108,12 @@ async def confirm_registration(data: VerifyOtp, db: Session = Depends(get_db)):
         db.add(new_user)
         db.flush() 
         
-        # Generate token (if this fails, nothing is committed)
-        token = create_access_token({"sub": str(new_user.id)})
+        # Generate token with type="user"
+        token = create_access_token({
+            "sub": str(new_user.id),
+            "role": new_user.role.value,
+            "type": "user"  # ✅ Added
+        })
         
         # Only commit if everything succeeded
         db.commit()
@@ -116,7 +123,7 @@ async def confirm_registration(data: VerifyOtp, db: Session = Depends(get_db)):
         redis_client.delete(f"register:{data.email}")
         redis_client.delete(f"otp:{data.email}")
         
-        return {"access_token": token}
+        return {"access_token": token, "token_type": "bearer"}
         
     except Exception as e:
         db.rollback()
@@ -126,30 +133,30 @@ async def confirm_registration(data: VerifyOtp, db: Session = Depends(get_db)):
         )
 
 
-
 @router.post("/login", response_model=TokenResponse)
 async def login(
     user_data: UserLogin, 
     db: Session = Depends(get_db),
-    ):
+):
     
     user = db.query(User).filter(User.email == user_data.email).first()
 
     if not user:
         raise HTTPException(
-            status_code=401,
+            status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password"
         )
     
     if not verify_password(user_data.password, user.password):
         raise HTTPException(
-            status_code=401,
+            status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password"
         )
     
     token = create_access_token({
         "sub": str(user.id),
-        "role": user.role.value
+        "role": user.role.value,
+        "type": "user"  # ✅ Added
     })
 
     return {
@@ -159,28 +166,29 @@ async def login(
 
 
 @router.post("/form-login", response_model=TokenResponse)
-async def login(
+async def form_login(  
     form_data: OAuth2PasswordRequestForm = Depends(), 
     db: Session = Depends(get_db),
-    ):
+):
     
     user = db.query(User).filter(User.email == form_data.username).first()
 
     if not user:
         raise HTTPException(
-            status_code=401,
+            status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password"
         )
     
     if not verify_password(form_data.password, user.password):
         raise HTTPException(
-            status_code=401,
+            status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password"
         )
     
     token = create_access_token({
         "sub": str(user.id),
-        "role": user.role.value
+        "role": user.role.value,
+        "type": "user"
     })
 
     return {

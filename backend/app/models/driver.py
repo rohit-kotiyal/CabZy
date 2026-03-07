@@ -26,6 +26,10 @@ class Driver(Base):
 
     status = Column(Enum(DriverStatus), default=DriverStatus.offline)
 
+
+    total_earnings = Column(Float, default=0)
+    total_rides = Column(Integer, default=0)
+
     user = relationship("User")
 
     

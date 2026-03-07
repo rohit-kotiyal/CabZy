@@ -1,23 +1,50 @@
-# Python
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-*.db
-
-# Virtual environment
-venv/
-.env/
-
-# Environment variables
-.env
-
-# IDE
 .vscode/
-.idea/
 
-# OS
-.DS_Store
+# Add these to your .gitignore
+cat >> .gitignore << 'EOF'
 
-# Logs
-*.log
+# Python additional
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+ENV/
+*.egg-info/
+dist/
+build/
+
+# Database
+*.sqlite3
+*.db-journal
+
+# Environment variables (additional patterns)
+.env.*
+*.env
+.env.local
+.env.production
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Alembic (if you want to ignore local DB state)
+# alembic/versions/*.pyc
+
+# macOS additional
+._*
+
+# Windows additional
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# Redis dump
+dump.rdb
+EOF

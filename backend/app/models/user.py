@@ -8,6 +8,7 @@ class UserRole(str, enum.Enum):
     rider = "rider"
     driver = "driver"
 
+
 class User(Base):
     __tablename__ = "users"
     
