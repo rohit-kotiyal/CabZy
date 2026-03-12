@@ -112,7 +112,7 @@ async def confirm_registration(data: VerifyOtp, db: Session = Depends(get_db)):
         token = create_access_token({
             "sub": str(new_user.id),
             "role": new_user.role.value,
-            "type": "user"  # ✅ Added
+            "type": "user" 
         })
         
         # Only commit if everything succeeded

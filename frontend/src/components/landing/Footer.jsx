@@ -63,7 +63,7 @@ export default function Footer(){
                 {/* Copyright Section */}
                 <div className="border-t border-slate-700 pt-6 sm:pt-8 text-center">
                     <p className="text-gray-400 text-xs sm:text-sm">
-                        © 2024 CabZy. All rights reserved.
+                        © 2026 CabZy. All rights reserved.
                     </p>
                 </div>
             </div>
