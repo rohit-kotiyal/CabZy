@@ -3,8 +3,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
-
-from .serializers import RegisterSerializer, UserSerializer
+from .models import RiderProfile, DriverProfile
+from .serializers import RegisterSerializer, UserSerializer, RiderProfileSerializer, DriverProfileSerializer
 
 
 # Create your views here.
@@ -39,3 +39,56 @@ class MeView(APIView):
 
     def get(self, request):
         return Response(UserSerializer(request.user).data)
+    
+
+
+class RiderProfileView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if not request.user.is_rider:
+            return Response({"detail": "Not a rider."}, status=status.HTTP_403_FORBIDDEN)
+        
+        profile = request.user.rider_profile
+        return Response(RiderProfileSerializer(profile).data)
+    
+    def patch(self, request):
+        if not request.user.is_rider:
+            return Response({"detail": "Not a rider."}, status=status.HTTP_403_FORBIDDEN)
+        
+        profile = request.user.rider_profile
+        serializer = RiderProfileSerializer(profile, data=request.data, partial=True)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+
+class DriverProfileView(APIView):
+    permission_classes = [IsAuthenticated]
+
+
+    def get(self, request):
+        if not request.user.is_driver:
+            return Response({"detail": "Not a driver."}, status=status.HTTP_403_FORBIDDEN)
+        
+        profile = request.user.driver_profile
+
+        return Response(DriverProfileSerializer(profile).data)
+    
+    def patch(self, request):
+        if not request.user.is_driver:
+            return Response({"detail": "Not a driver."}, status=status.HTTP_403_FORBIDDEN)
+        
+        profile = request.user.driver_profile
+        serializer = DriverProfileSerializer(profile, data=request.data, partial=True)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+

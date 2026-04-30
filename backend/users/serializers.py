@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
-from .models import User
+from .models import User, RiderProfile, DriverProfile
 
 
 
@@ -36,3 +36,24 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'email', 'phone', 'role']
+
+
+
+class RiderProfileSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(source='user.email', read_only=True)
+    phone = serializers.CharField(source='user.phone', read_only=True)
+
+
+    class Meta:
+        model = RiderProfile
+        fields = ['email', 'phone', 'default_pickup']
+
+
+class DriverProfileSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(source='user.email', read_only=True)
+    phone = serializers.CharField(source='user.phone', read_only=True)
+
+    class Meta:
+        model = DriverProfile
+        fields = ['email', 'phone', 'vehicle_type', 'vehicle_no', 'license_no', 'is_approved', 'is_available']
+        read_only_fields = ['is_approved']  # only admin can change this
