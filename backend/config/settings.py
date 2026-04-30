@@ -11,6 +11,7 @@ environ.Env.read_env(BASE_DIR / '.env')
 SECRET_KEY = env('SECRET_KEY')
 DEBUG = env.bool('DEBUG', default=False)
 ALLOWED_HOSTS = ['*']
+ORS_API_KEY = env('ORS_API_KEY')
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -27,6 +28,7 @@ INSTALLED_APPS = [
     
     # our apps (will add as we create them)
     'users',
+    'rides',
 ]
 
 MIDDLEWARE = [
