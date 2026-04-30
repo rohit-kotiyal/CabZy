@@ -13,7 +13,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         fields = ['email', 'phone', 'role', 'password', 'password2']
 
     def validate_role(self, value):
-        if value not in [User.Role.RIDER or User.Role.DRIVER]:
+        if value not in [User.Role.RIDER, User.Role.DRIVER]:
             raise serializers.ValidationError('Invalid role.')
         return value
     
