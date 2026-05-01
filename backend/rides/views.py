@@ -1,3 +1,4 @@
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -73,3 +74,85 @@ class RideDetailView(APIView):
             return Response({"detail": "Not authorized."}, status=status.HTTP_403_FORBIDDEN)
 
         return Response(RideSerializer(ride).data)
+    
+
+
+class StartRideView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def patch(self, request, pk):
+        if not request.user.is_driver:
+            return Response({"detail": "Only drivers can start rides."}, status=status.HTTP_403_FORBIDDEN)
+        
+        try:
+            ride = Ride.objects.get(pk=pk, driver=request.user.driver_profile)
+        except Ride.DoesNotExist:
+            return Response({"detail": "Ride not found or not assigned to you."}, status=status.HTTP_404_NOT_FOUND)
+        
+        if ride.status != Ride.Status.ASSIGNED:
+            return Response({"detail": f"Cannot start a ride with status '{ride.status}'."}, status=status.HTTP_400_BAD_REQUEST)
+
+        ride.status = Ride.Status.IN_PROGRESS
+        ride.started_at = timezone.now()
+        ride.save()
+
+        return Response(RideSerializer(ride).data)
+    
+
+class CompleteRideView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, pk):
+        if not request.user.is_driver:
+            return Response({"detail": "Only drivers can complete rides."}, status=status.HTTP_403_FORBIDDEN)
+        
+        try:
+            ride = Ride.objects.get(pk=pk, driver=request.user.driver_profile)
+
+        except Ride.DoesNotExist:
+            return Response({"detail": "Ride not found or not assigned to you."}, status=status.HTTP_404_NOT_FOUND)
+        
+        if ride.status != Ride.Status.IN_PROGRESS:
+            return Response({"detail": f"Cannot complete a ride with status '{ride.status}'."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        ride.status = Ride.Status.COMPLETED
+        ride.completed_at = timezone.now()
+        ride.save()
+
+        driver_profile = request.user.driver_profile
+        driver_profile.is_available = False
+        driver_profile.save()
+
+
+        return Response(RideSerializer(ride).data)
+    
+
+class CancelRideView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, pk):
+        # both rider and driver can cancel
+        if not (request.user.is_rider or request.user.is_driver):
+            return Response({"detail": "Not authorized."}, status=status.HTTP_403_FORBIDDEN)
+
+        try:
+            if request.user.is_rider:
+                ride = Ride.objects.get(pk=pk, rider=request.user)
+            else:
+                ride = Ride.objects.get(pk=pk, driver=request.user.driver_profile)
+        except Ride.DoesNotExist:
+            return Response({"detail": "Ride not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        # can only cancel if not already completed or cancelled
+        if ride.status in [Ride.Status.COMPLETED, Ride.Status.CANCELLED]:
+            return Response({"detail": f"Cannot cancel a ride with status '{ride.status}'."}, status=status.HTTP_400_BAD_REQUEST)
+
+        ride.status       = Ride.Status.CANCELLED
+        ride.cancelled_by = Ride.CancelledBy.RIDER if request.user.is_rider else Ride.CancelledBy.DRIVER
+        ride.cancel_reason = request.data.get('reason', '')
+        ride.save()
+
+        return Response(RideSerializer(ride).data)
+    
+
+    
