@@ -29,6 +29,7 @@ INSTALLED_APPS = [
     # our apps (will add as we create them)
     'users',
     'rides',
+    'drivers',
 ]
 
 MIDDLEWARE = [
