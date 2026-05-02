@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.fields import empty
 
+from payments.models import Payment
 from .models import Ride
 from .serializers import RideCreateSerializer, RideSerializer, FareEstimateSerializer
 from .services import calculate_fare, estimate_distance
@@ -118,6 +119,17 @@ class CompleteRideView(APIView):
         ride.status = Ride.Status.COMPLETED
         ride.completed_at = timezone.now()
         ride.save()
+
+
+        # auto-create a pending payment record
+        Payment.objects.get_or_create(
+            ride = ride,
+            defaults= [{
+                'amount': ride.fare,
+                'method': Payment.Method.CASH,
+                'status': Payment.STATUS.PENDING
+            }]
+        )
 
         driver_profile = request.user.driver_profile
         driver_profile.is_available = False

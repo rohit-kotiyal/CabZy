@@ -1,5 +1,5 @@
 from django.urls import path
-from views import ToggleAvailibilityView, PendingRideView, AcceptRideView, RejectRideView
+from .views import ToggleAvailibilityView, PendingRideView, AcceptRideView, RejectRideView
 
 
 urlpatterns = [
