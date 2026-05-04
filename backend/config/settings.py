@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     'payments',
     'reviews',
     'notifications',
+    'admin_panel',
 ]
 
 MIDDLEWARE = [
