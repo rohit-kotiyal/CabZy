@@ -6,6 +6,9 @@ from rest_framework import status
 from rides.models import Ride
 from rides.serializers import RideSerializer
 
+from notifications.models import Notification
+from notifications.sevices import send_notification
+
 
 class ToggleAvailibilityView(APIView):
     permission_classes = [IsAuthenticated]
@@ -80,6 +83,13 @@ class AcceptRideView(APIView):
         ride.driver = profile
         ride.status = Ride.Status.ASSIGNED
         ride.save()
+
+        send_notification(
+            user=ride.rider,
+            type=Notification.Type.RIDE_ASSIGNED,
+            title="Driver Assigned",
+            message=f"Your driver is on the way! Vehicle: {profile.vehicle_type} — {profile.vehicle_no}"
+        )
 
         return Response(RideSerializer(ride).data, status=status.HTTP_200_OK)
     

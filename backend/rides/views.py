@@ -10,6 +10,10 @@ from .models import Ride
 from .serializers import RideCreateSerializer, RideSerializer, FareEstimateSerializer
 from .services import calculate_fare, estimate_distance
 
+from notifications.sevices import send_notification
+from notifications.models import Notification
+
+
 
 # Create your views here.
 class FareEstimateView(APIView):
@@ -97,6 +101,14 @@ class StartRideView(APIView):
         ride.started_at = timezone.now()
         ride.save()
 
+
+        send_notification(
+            user=ride.rider,
+            type=Notification.Type.RIDE_STARTED,
+            title="Your ride has started",
+            message="Your driver has started the ride. Hang tight!"
+        )
+
         return Response(RideSerializer(ride).data)
     
 
@@ -136,6 +148,13 @@ class CompleteRideView(APIView):
         driver_profile.save()
 
 
+        send_notification(
+            user=ride.rider,
+            type=Notification.Type.RIDE_COMPLETED,
+            title="Ride Completed",
+            message=f"Your ride is complete. Total Fare: Rs.{ride.fare}. Please leave a review!"
+        )
+
         return Response(RideSerializer(ride).data)
     
 
@@ -164,7 +183,18 @@ class CancelRideView(APIView):
         ride.cancel_reason = request.data.get('reason', '')
         ride.save()
 
+
+        # notify the other party
+        if request.user.is_rider and ride.driver:
+            send_notification(
+                user=ride.driver.user,
+                type=Notification.Type.RIDE_CANCELLED,
+                title="Ride Cancelled",
+                message=f"Rider cancelled the ride. Reason: {ride.cancel_reason or 'No reason given'}"
+            )
+
         return Response(RideSerializer(ride).data)
     
 
     
+
