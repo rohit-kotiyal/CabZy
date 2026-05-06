@@ -3,11 +3,15 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
+from django_ratelimit.decorators import ratelimit
+from django.utils.decorators import method_decorator
+
 from .models import RiderProfile, DriverProfile
 from .serializers import RegisterSerializer, UserSerializer, RiderProfileSerializer, DriverProfileSerializer
 
 
-# Create your views here.
+
+@method_decorator(ratelimit(key='ip', rate='5/m', block=True), name='post')
 class RegisterView(APIView):
     permission_classes = [AllowAny]
 
@@ -91,4 +95,4 @@ class DriverProfileView(APIView):
             return Response(serializer.data)
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
+    

@@ -17,10 +17,21 @@ class RegisterSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('Invalid role.')
         return value
     
+    def validate_email(self, value):
+        # normalize to lowercase
+        return value.lower().strip()
+    
     def validate(self, attrs):
         if attrs['password'] != attrs['password2']:
             raise serializers.ValidationError({"password": "Password do not match.!"})
         return attrs
+    
+    def validate_phone(self, value):
+        if value and not value.isdigit():
+            raise serializers.ValidationError("Phone must contain digits only.")
+        if value and len(value) != 10:
+            raise serializers.ValidationError("Phone must be 10 digits.")
+        return value
     
     def create(self, validated_data):
         validated_data.pop('password2')

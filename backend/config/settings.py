@@ -100,9 +100,16 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),
+    'EXCEPTION_HANDLER': 'config.error_handlers.custom_exception_handler',
 }
 
-CORS_ALLOW_ALL_ORIGINS = True 
+
+CORS_ALLOW_ORIGINS = [
+    "http://localhost:5173",    # React dev server(vite)
+    "http://localhost:8000",
+]
+
+CORS_ALLOW_ALL_ORIGINS = False
 AUTH_USER_MODEL = 'users.User'
 
 
@@ -111,4 +118,48 @@ SIMPLE_JWT = {
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     'ROTATE_REFRESH_TOKENS':  True,
     'BLACKLIST_AFTER_ROTATION': True,
+}
+
+
+# Rate limiting backend
+RATELIMIT_USE_CACHE = 'default'
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+    }
+}
+
+
+# Security headers (matters in production)
+SECURE_BROWSER_XSS_FILTER    = True
+X_FRAME_OPTIONS               = 'DENY'
+SECURE_CONTENT_TYPE_NOSNIFF   = True
+
+
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {message}',
+            'style':  '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class':     'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+        'file': {
+            'class':     'logging.FileHandler',
+            'filename':  BASE_DIR / 'logs/cabzy.log',
+            'formatter': 'verbose',
+        },
+    },
+    'root': {
+        'handlers': ['console', 'file'],
+        'level':    'INFO',
+    },
 }
