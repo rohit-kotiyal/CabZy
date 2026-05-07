@@ -5,6 +5,9 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.fields import empty
 
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
+
 from payments.models import Payment
 from .models import Ride
 from .serializers import RideCreateSerializer, RideSerializer, FareEstimateSerializer
@@ -12,6 +15,18 @@ from .services import calculate_fare, estimate_distance
 
 from notifications.sevices import send_notification
 from notifications.models import Notification
+
+
+# helper function
+def push_ride_status(ride_id, new_status):
+    channel_layer = get_channel_layer()
+    async_to_sync(channel_layer.group_send)(
+        f"ride_{ride_id}",
+        {
+            'type': 'ride_status_update',
+            'status': new_status,
+        }
+    )
 
 
 
@@ -101,6 +116,7 @@ class StartRideView(APIView):
         ride.started_at = timezone.now()
         ride.save()
 
+        push_ride_status(ride.id, ride.status)
 
         send_notification(
             user=ride.rider,
@@ -132,6 +148,7 @@ class CompleteRideView(APIView):
         ride.completed_at = timezone.now()
         ride.save()
 
+        push_ride_status(ride.id, ride.status)
 
         # auto-create a pending payment record
         Payment.objects.get_or_create(
@@ -183,6 +200,7 @@ class CancelRideView(APIView):
         ride.cancel_reason = request.data.get('reason', '')
         ride.save()
 
+        push_ride_status(ride.id, ride.status)
 
         # notify the other party
         if request.user.is_rider and ride.driver:
@@ -196,5 +214,4 @@ class CancelRideView(APIView):
         return Response(RideSerializer(ride).data)
     
 
-    
 

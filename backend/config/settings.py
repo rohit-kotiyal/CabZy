@@ -10,7 +10,7 @@ environ.Env.read_env(BASE_DIR / '.env')
 
 SECRET_KEY = env('SECRET_KEY')
 DEBUG = env.bool('DEBUG', default=False)
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 ORS_API_KEY = env('ORS_API_KEY')
 
 INSTALLED_APPS = [
@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     'reviews',
     'notifications',
     'admin_panel',
+    'channels',
 ]
 
 MIDDLEWARE = [
@@ -161,5 +162,18 @@ LOGGING = {
     'root': {
         'handlers': ['console', 'file'],
         'level':    'INFO',
+    },
+}
+
+
+# Django Channels 
+ASGI_APPLICATION = 'config.asgi.application'
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            'hosts': [('127.0.0.1', 6379)],
+        },
     },
 }
